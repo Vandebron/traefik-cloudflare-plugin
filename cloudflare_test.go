@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	cloudflare "github.com/agence-gaya/traefik-plugin-cloudflare"
-	"github.com/agence-gaya/traefik-plugin-cloudflare/internal"
+	cloudflare "github.com/Vandebron/traefik-plugin-cloudflare"
+	"github.com/Vandebron/traefik-plugin-cloudflare/internal"
 	"github.com/stretchr/testify/require"
 )
 
