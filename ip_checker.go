@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 	"log"
-	"github.com/agence-gaya/traefik-plugin-cloudflare/internal"
+	"github.com/Vandebron/traefik-plugin-cloudflare/internal"
 )
 
 type ipChecker interface {

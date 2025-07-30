@@ -1,7 +1,7 @@
 displayName: Cloudflare
 summary: Handle traffic coming from Cloudflare.
 type: middleware
-import: github.com/agence-gaya/traefik-plugin-cloudflare
+import: github.com/Vandebron/traefik-plugin-cloudflare
 
 testData:
   trustedCIDRs: []
