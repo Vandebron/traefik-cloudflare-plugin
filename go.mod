@@ -1,4 +1,4 @@
-module github.com/Vandebron/traefik-plugin-cloudflare
+module github.com/Vandebron/traefik-cloudflare-plugin
 
 go 1.23
 

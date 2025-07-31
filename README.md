@@ -1,4 +1,4 @@
-# traefik-plugin-cloudflare
+# traefik-cloudflare-plugin
 
 [![Tag Badge]][Tag] [![Go Version Badge]][Go Version] [![Build Badge]][Build] [![Go Report Card Badge]][Go Report Card]
 
@@ -34,7 +34,7 @@ Traefik plugin to handle traffic coming from Cloudflare.
 experimental:
   plugins:
     cloudflare:
-      moduleName: github.com/Vandebron/traefik-plugin-cloudflare
+      moduleName: github.com/Vandebron/traefik-cloudflare-plugin
       version: v1.0.0
 ```
 
@@ -59,11 +59,11 @@ http:
         - cloudflare
 ```
 
-[Tag]: https://github.com/Vandebron/traefik-plugin-cloudflare/tags
-[Tag Badge]: https://img.shields.io/github/v/tag/Vandebron/traefik-plugin-cloudflare?sort=semver
+[Tag]: https://github.com/Vandebron/traefik-cloudflare-plugin/tags
+[Tag Badge]: https://img.shields.io/github/v/tag/Vandebron/traefik-cloudflare-plugin?sort=semver
 [Go Version]: /go.mod
-[Go Version Badge]: https://img.shields.io/github/go-mod/go-version/Vandebron/traefik-plugin-cloudflare
-[Build]: https://github.com/Vandebron/traefik-plugin-cloudflare/actions/workflows/test.yml
-[Build Badge]: https://img.shields.io/github/actions/workflow/status/Vandebron/traefik-plugin-cloudflare/test.yml
-[Go Report Card]: https://goreportcard.com/report/github.com/Vandebron/traefik-plugin-cloudflare
-[Go Report Card Badge]: https://goreportcard.com/badge/github.com/Vandebron/traefik-plugin-cloudflare
+[Go Version Badge]: https://img.shields.io/github/go-mod/go-version/Vandebron/traefik-cloudflare-plugin
+[Build]: https://github.com/Vandebron/traefik-cloudflare-plugin/actions/workflows/test.yml
+[Build Badge]: https://img.shields.io/github/actions/workflow/status/Vandebron/traefik-cloudflare-plugin/test.yml
+[Go Report Card]: https://goreportcard.com/report/github.com/Vandebron/traefik-cloudflare-plugin
+[Go Report Card Badge]: https://goreportcard.com/badge/github.com/Vandebron/traefik-cloudflare-plugin

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Vandebron/traefik-plugin-cloudflare/internal"
+	"github.com/Vandebron/traefik-cloudflare-plugin/internal"
 	"log"
 	"net"
 	"net/http"

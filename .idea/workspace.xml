@@ -90,7 +90,7 @@
     <option name="commitMessagesMapping">
       <RewordedCommitMessageMapping>
         <option name="originalMessage" value="Update build badge" />
-        <option name="rewordedMessage" value="Rename plugin Vandebron/traefik-plugin-cloudflare" />
+        <option name="rewordedMessage" value="Rename plugin Vandebron/traefik-cloudflare-plugin" />
       </RewordedCommitMessageMapping>
     </option>
     <option name="currentCommit" value="1" />
