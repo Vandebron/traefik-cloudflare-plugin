@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Vandebron/traefik-plugin-cloudflare/internal"
+	"log"
 	"net"
 	"net/http"
 	"time"
-	"log"
-	"github.com/Vandebron/traefik-plugin-cloudflare/internal"
 )
 
 type ipChecker interface {

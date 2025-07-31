@@ -2,14 +2,14 @@ package traefik_plugin_cloudflare
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
-	"time"
 	"strings"
-	"encoding/json"
-	"log"
+	"time"
 )
 
 const (
@@ -22,14 +22,14 @@ type Config struct {
 	AllowedCIDRs           []string `json:"allowedCIDRs,omitempty"`
 	RefreshInterval        string   `json:"refreshInterval,omitempty"`
 	OverwriteRequestHeader bool     `json:"overwriteRequestHeader,omitempty"`
-	AppendXForwardedFor     bool     `json:"appendXForwardedFor,omitempty"`
+	AppendXForwardedFor    bool     `json:"appendXForwardedFor,omitempty"`
 	Debug                  bool     `json:"debug,omitempty"`
 }
 
 func CreateConfig() *Config {
 	return &Config{
 		TrustedCIDRs:           nil,
-		AllowedCIDRs:			nil,
+		AllowedCIDRs:           nil,
 		RefreshInterval:        defaultRefresh,
 		OverwriteRequestHeader: true,
 		AppendXForwardedFor:    false,
@@ -87,10 +87,10 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		}
 
 		switch {
-			case ri <= 0:
-				ri = 0
-			case ri < minRefresh:
-				ri = minRefresh
+		case ri <= 0:
+			ri = 0
+		case ri < minRefresh:
+			ri = minRefresh
 		}
 
 		checker := &cloudflareIPChecker{
@@ -130,21 +130,21 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		remoteAddrTrim := strings.TrimSpace(r.RemoteAddr)
-   		if len(remoteAddrTrim) > 0 {
-   			ipList = append(ipList, remoteAddrTrim)
-   		}
-   	} else {
+		if len(remoteAddrTrim) > 0 {
+			ipList = append(ipList, remoteAddrTrim)
+		}
+	} else {
 		ipTrim := strings.TrimSpace(ip)
 		if len(ipTrim) > 0 {
 			ipList = append(ipList, ipTrim)
 		}
 	}
 
-   	trusted := false
-   	allowed := false
+	trusted := false
+	allowed := false
 
-   	for i := 0; i < len(ipList); i++ {
-   		sip := net.ParseIP(ipList[i])
+	for i := 0; i < len(ipList); i++ {
+		sip := net.ParseIP(ipList[i])
 		if sip == nil {
 			if c.debug {
 				log.Println(fmt.Sprintf("debug: bad ip %s", ipList[i]))
@@ -167,8 +167,8 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if trustIp {
 			trusted = true
 			allowed = true
-           	break
-        }
+			break
+		}
 
 		allowIp, err := c.allowedChecker.CheckIP(r.Context(), sip)
 		if err != nil && c.debug {
@@ -176,9 +176,9 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if allowIp {
-        	allowed = true
-        	break
-        }
+			allowed = true
+			break
+		}
 	}
 
 	if !allowed {
@@ -212,11 +212,11 @@ func overwriteRequestHeader(r *http.Request, appendXForwardedFor bool) error {
 	}
 
 	if r.Header.Get("CF-Visitor") != "" {
-    	var cfVisitorValue CFVisitorHeader
-    	err := json.Unmarshal([]byte(r.Header.Get("CF-Visitor")), &cfVisitorValue);
-    	if err == nil {
-    	    r.Header.Set("X-Forwarded-Proto", cfVisitorValue.Scheme)
-    	}
+		var cfVisitorValue CFVisitorHeader
+		err := json.Unmarshal([]byte(r.Header.Get("CF-Visitor")), &cfVisitorValue)
+		if err == nil {
+			r.Header.Set("X-Forwarded-Proto", cfVisitorValue.Scheme)
+		}
 	}
 
 	ipList := XForwardedIpValues(r)
@@ -231,7 +231,7 @@ func overwriteRequestHeader(r *http.Request, appendXForwardedFor bool) error {
 		}
 	}
 
-    r.Header.Set("X-Forwarded-For", strings.Join(ipList, ", "))
+	r.Header.Set("X-Forwarded-For", strings.Join(ipList, ", "))
 	r.Header.Set("X-Real-Ip", ip)
 
 	return nil
@@ -241,14 +241,14 @@ func XForwardedIpValues(r *http.Request) []string {
 	var list []string
 
 	xff := r.Header.Get("X-Forwarded-For")
-   	xffs := strings.Split(xff, ",")
+	xffs := strings.Split(xff, ",")
 
-   	for i := 0; i < len(xffs); i++ {
-   		xffsTrim := strings.TrimSpace(xffs[i])
-   		if len(xffsTrim) > 0 {
-   			list = append(list, xffsTrim)
-    	}
-    }
+	for i := 0; i < len(xffs); i++ {
+		xffsTrim := strings.TrimSpace(xffs[i])
+		if len(xffsTrim) > 0 {
+			list = append(list, xffsTrim)
+		}
+	}
 
-    return list
+	return list
 }

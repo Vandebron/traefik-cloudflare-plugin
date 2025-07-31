@@ -167,32 +167,32 @@ func TestCloudflare(t *testing.T) {
 		})
 
 		t.Run("expired with empty cidrs", func(t *testing.T) {
-        	now = ptime(now.Add(time.Hour))
+			now = ptime(now.Add(time.Hour))
 
-        	http.DefaultClient = &http.Client{
-        		Transport: &staticJsonTransport{
-        			Response: `{"result":{"ipv4_cidrs":[],"ipv6_cidrs":[],"etag":"ffffffffffffffffffffffffffffffff"},"success":true,"errors":[],"messages":[]}`,
-        		},
-        	}
+			http.DefaultClient = &http.Client{
+				Transport: &staticJsonTransport{
+					Response: `{"result":{"ipv4_cidrs":[],"ipv6_cidrs":[],"etag":"ffffffffffffffffffffffffffffffff"},"success":true,"errors":[],"messages":[]}`,
+				},
+			}
 
-        	req := &http.Request{
-        		RemoteAddr: "172.16.1.1:42",
-        	}
+			req := &http.Request{
+				RemoteAddr: "172.16.1.1:42",
+			}
 
-        	rr1 := httptest.NewRecorder()
-        	handler.ServeHTTP(rr1, req)
+			rr1 := httptest.NewRecorder()
+			handler.ServeHTTP(rr1, req)
 
-        	res1 := rr1.Result()
-            require.Equal(t, http.StatusForbidden, res1.StatusCode)
+			res1 := rr1.Result()
+			require.Equal(t, http.StatusForbidden, res1.StatusCode)
 
-        	now = ptime(now.Add(time.Hour))
+			now = ptime(now.Add(time.Hour))
 
-        	rr2 := httptest.NewRecorder()
-            handler.ServeHTTP(rr2, req)
+			rr2 := httptest.NewRecorder()
+			handler.ServeHTTP(rr2, req)
 
-            res2 := rr2.Result()
-        	require.Equal(t, http.StatusForbidden, res2.StatusCode)
-        })
+			res2 := rr2.Result()
+			require.Equal(t, http.StatusForbidden, res2.StatusCode)
+		})
 
 		t.Run("expired", func(t *testing.T) {
 			now = ptime(now.Add(time.Hour))
@@ -282,64 +282,64 @@ func TestCloudflare(t *testing.T) {
 		})
 
 		t.Run("allowed ipv4 xff", func(t *testing.T) {
-            req := &http.Request{
-                RemoteAddr: "10.10.10.10:42",
-                Header: makeHeaders(map[string]string{
-                	"X-Forwarded-For": "172.16.1.1, 1.1.1.1",
-                }),
-            }
+			req := &http.Request{
+				RemoteAddr: "10.10.10.10:42",
+				Header: makeHeaders(map[string]string{
+					"X-Forwarded-For": "172.16.1.1, 1.1.1.1",
+				}),
+			}
 
-            rr := httptest.NewRecorder()
-            handler.ServeHTTP(rr, req)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-            res := rr.Result()
-            require.Equal(t, http.StatusOK, res.StatusCode)
-        })
+			res := rr.Result()
+			require.Equal(t, http.StatusOK, res.StatusCode)
+		})
 
-        t.Run("disallowed ipv4 xff", func(t *testing.T) {
-            req := &http.Request{
-	            RemoteAddr: "10.10.10.10:42",
-                Header: makeHeaders(map[string]string{
-                  	"X-Forwarded-For": "172.15.1.1, 1.1.1.1",
-                }),
-            }
+		t.Run("disallowed ipv4 xff", func(t *testing.T) {
+			req := &http.Request{
+				RemoteAddr: "10.10.10.10:42",
+				Header: makeHeaders(map[string]string{
+					"X-Forwarded-For": "172.15.1.1, 1.1.1.1",
+				}),
+			}
 
-            rr := httptest.NewRecorder()
-            handler.ServeHTTP(rr, req)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-            res := rr.Result()
-            require.Equal(t, http.StatusForbidden, res.StatusCode)
-        })
+			res := rr.Result()
+			require.Equal(t, http.StatusForbidden, res.StatusCode)
+		})
 
-        t.Run("allowed ipv6 xff", func(t *testing.T) {
-            req := &http.Request{
-                RemoteAddr: "10.10.10.10:42",
-                Header: makeHeaders(map[string]string{
-                    "X-Forwarded-For": "2001:db8:2:2::1, 1.1.1.1",
-                }),
-            }
+		t.Run("allowed ipv6 xff", func(t *testing.T) {
+			req := &http.Request{
+				RemoteAddr: "10.10.10.10:42",
+				Header: makeHeaders(map[string]string{
+					"X-Forwarded-For": "2001:db8:2:2::1, 1.1.1.1",
+				}),
+			}
 
-            rr := httptest.NewRecorder()
-            handler.ServeHTTP(rr, req)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-            res := rr.Result()
-            require.Equal(t, http.StatusOK, res.StatusCode)
-        })
+			res := rr.Result()
+			require.Equal(t, http.StatusOK, res.StatusCode)
+		})
 
-        t.Run("disallowed ipv6 xff", func(t *testing.T) {
-            req := &http.Request{
-                RemoteAddr: "10.10.10.10:42",
-                Header: makeHeaders(map[string]string{
-                    "X-Forwarded-For": "2001:db8:1:2::1, 1.1.1.1",
-                }),
-            }
+		t.Run("disallowed ipv6 xff", func(t *testing.T) {
+			req := &http.Request{
+				RemoteAddr: "10.10.10.10:42",
+				Header: makeHeaders(map[string]string{
+					"X-Forwarded-For": "2001:db8:1:2::1, 1.1.1.1",
+				}),
+			}
 
-            rr := httptest.NewRecorder()
-            handler.ServeHTTP(rr, req)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-            res := rr.Result()
-            require.Equal(t, http.StatusForbidden, res.StatusCode)
-        })
+			res := rr.Result()
+			require.Equal(t, http.StatusForbidden, res.StatusCode)
+		})
 	})
 
 	t.Run("overwrite header request", func(t *testing.T) {
@@ -359,94 +359,7 @@ func TestCloudflare(t *testing.T) {
 				RemoteAddr: "172.16.1.1:42",
 				Header: makeHeaders(map[string]string{
 					"CF-Connecting-IP": "1.2.3.4",
-					"CF-Visitor": "{\"scheme\":\"https\"}",
-				}),
-			}
-
-			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
-
-			xff := strings.Join(req.Header.Values("X-Forwarded-For"), ",")
-			require.Equal(t, "1.2.3.4", xff)
-
-			xri := strings.Join(req.Header.Values("X-Real-Ip"), ",")
-            require.Equal(t, "1.2.3.4", xri)
-
-            xfp := strings.Join(req.Header.Values("X-Forwarded-Proto"), ",")
-            require.Equal(t, "https", xfp)
-
-			res := rr.Result()
-			require.Equal(t, http.StatusOK, res.StatusCode)
-		})
-
-		t.Run("overwrite", func(t *testing.T) {
-			req := &http.Request{
-				RemoteAddr: "172.16.1.1:42",
-				Header: makeHeaders(map[string]string{
-					"CF-Connecting-IP": "1.2.3.4",
-					"CF-Visitor": "{\"scheme\":\"https\"}",
-					"X-Forwarded-For": "1.1.1.1, 2.2.2.2",
-					"X-Real-Ip": "172.16.1.1",
-				}),
-			}
-
-			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
-
-			xff := strings.Join(req.Header.Values("X-Forwarded-For"), ",")
-			require.Equal(t, "1.2.3.4, 2.2.2.2", xff)
-
-			xri := strings.Join(req.Header.Values("X-Real-Ip"), ",")
-            require.Equal(t, "1.2.3.4", xri)
-
-            xfp := strings.Join(req.Header.Values("X-Forwarded-Proto"), ",")
-            require.Equal(t, "https", xfp)
-
-            res := rr.Result()
-			require.Equal(t, http.StatusOK, res.StatusCode)
-		})
-
-		t.Run("missing header", func(t *testing.T) {
-			req := &http.Request{
-				RemoteAddr: "172.16.1.1:42",
-				Header: makeHeaders(map[string]string{
-					"X-Forwarded-For": "2.2.2.2, 3.3.3.3",
-				}),
-			}
-
-			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
-
-			res := rr.Result()
-			require.Equal(t, http.StatusBadRequest, res.StatusCode)
-
-			body, err := io.ReadAll(res.Body)
-			if err != nil {
-            	t.Error(err)
-            }
-            require.Equal(t, "cf:Bad Request\n", string(body))
-		})
-	})
-
-	t.Run("overwrite header request with append xff", func(t *testing.T) {
-		cfg := cloudflare.CreateConfig()
-		cfg.TrustedCIDRs = []string{"0.0.0.0/0"}
-		cfg.OverwriteRequestHeader = true
-		cfg.AppendXForwardedFor = true
-		cfg.Debug = true
-
-		ctx := context.Background()
-		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
-		handler, err := cloudflare.New(ctx, next, cfg, "cloudflare")
-		require.NoError(t, err)
-
-		t.Run("valid", func(t *testing.T) {
-			req := &http.Request{
-				RemoteAddr: "172.16.1.1:42",
-				Header: makeHeaders(map[string]string{
-					"CF-Connecting-IP": "1.2.3.4",
-					"CF-Visitor": "{\"scheme\":\"https\"}",
+					"CF-Visitor":       "{\"scheme\":\"https\"}",
 				}),
 			}
 
@@ -471,9 +384,96 @@ func TestCloudflare(t *testing.T) {
 				RemoteAddr: "172.16.1.1:42",
 				Header: makeHeaders(map[string]string{
 					"CF-Connecting-IP": "1.2.3.4",
-					"CF-Visitor": "{\"scheme\":\"https\"}",
-					"X-Forwarded-For": "1.1.1.1, 2.2.2.2",
-					"X-Real-Ip": "172.16.1.1",
+					"CF-Visitor":       "{\"scheme\":\"https\"}",
+					"X-Forwarded-For":  "1.1.1.1, 2.2.2.2",
+					"X-Real-Ip":        "172.16.1.1",
+				}),
+			}
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			xff := strings.Join(req.Header.Values("X-Forwarded-For"), ",")
+			require.Equal(t, "1.2.3.4, 2.2.2.2", xff)
+
+			xri := strings.Join(req.Header.Values("X-Real-Ip"), ",")
+			require.Equal(t, "1.2.3.4", xri)
+
+			xfp := strings.Join(req.Header.Values("X-Forwarded-Proto"), ",")
+			require.Equal(t, "https", xfp)
+
+			res := rr.Result()
+			require.Equal(t, http.StatusOK, res.StatusCode)
+		})
+
+		t.Run("missing header", func(t *testing.T) {
+			req := &http.Request{
+				RemoteAddr: "172.16.1.1:42",
+				Header: makeHeaders(map[string]string{
+					"X-Forwarded-For": "2.2.2.2, 3.3.3.3",
+				}),
+			}
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			res := rr.Result()
+			require.Equal(t, http.StatusBadRequest, res.StatusCode)
+
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Error(err)
+			}
+			require.Equal(t, "cf:Bad Request\n", string(body))
+		})
+	})
+
+	t.Run("overwrite header request with append xff", func(t *testing.T) {
+		cfg := cloudflare.CreateConfig()
+		cfg.TrustedCIDRs = []string{"0.0.0.0/0"}
+		cfg.OverwriteRequestHeader = true
+		cfg.AppendXForwardedFor = true
+		cfg.Debug = true
+
+		ctx := context.Background()
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+		handler, err := cloudflare.New(ctx, next, cfg, "cloudflare")
+		require.NoError(t, err)
+
+		t.Run("valid", func(t *testing.T) {
+			req := &http.Request{
+				RemoteAddr: "172.16.1.1:42",
+				Header: makeHeaders(map[string]string{
+					"CF-Connecting-IP": "1.2.3.4",
+					"CF-Visitor":       "{\"scheme\":\"https\"}",
+				}),
+			}
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			xff := strings.Join(req.Header.Values("X-Forwarded-For"), ",")
+			require.Equal(t, "1.2.3.4", xff)
+
+			xri := strings.Join(req.Header.Values("X-Real-Ip"), ",")
+			require.Equal(t, "1.2.3.4", xri)
+
+			xfp := strings.Join(req.Header.Values("X-Forwarded-Proto"), ",")
+			require.Equal(t, "https", xfp)
+
+			res := rr.Result()
+			require.Equal(t, http.StatusOK, res.StatusCode)
+		})
+
+		t.Run("overwrite", func(t *testing.T) {
+			req := &http.Request{
+				RemoteAddr: "172.16.1.1:42",
+				Header: makeHeaders(map[string]string{
+					"CF-Connecting-IP": "1.2.3.4",
+					"CF-Visitor":       "{\"scheme\":\"https\"}",
+					"X-Forwarded-For":  "1.1.1.1, 2.2.2.2",
+					"X-Real-Ip":        "172.16.1.1",
 				}),
 			}
 
@@ -496,43 +496,43 @@ func TestCloudflare(t *testing.T) {
 
 	t.Run("no overwrite header request", func(t *testing.T) {
 		cfg := cloudflare.CreateConfig()
-        cfg.TrustedCIDRs = []string{"0.0.0.0/0"}
-        cfg.OverwriteRequestHeader = false
-        cfg.Debug = true
+		cfg.TrustedCIDRs = []string{"0.0.0.0/0"}
+		cfg.OverwriteRequestHeader = false
+		cfg.Debug = true
 
-        ctx := context.Background()
-        next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		ctx := context.Background()
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-        handler, err := cloudflare.New(ctx, next, cfg, "cloudflare")
-        require.NoError(t, err)
+		handler, err := cloudflare.New(ctx, next, cfg, "cloudflare")
+		require.NoError(t, err)
 
 		t.Run("valid", func(t *testing.T) {
-            req := &http.Request{
-                RemoteAddr: "172.16.1.1:42",
-                Header: makeHeaders(map[string]string{
-                    "CF-Connecting-IP": "1.2.3.4",
-                    "CF-Visitor": "{\"scheme\":\"https\"}",
-                    "X-Forwarded-For": "2.2.2.2, 3.3.3.3",
-                    "X-Forwarded-Proto": "http",
-                    "X-Real-Ip": "10.10.10.10",
-                }),
-            }
+			req := &http.Request{
+				RemoteAddr: "172.16.1.1:42",
+				Header: makeHeaders(map[string]string{
+					"CF-Connecting-IP":  "1.2.3.4",
+					"CF-Visitor":        "{\"scheme\":\"https\"}",
+					"X-Forwarded-For":   "2.2.2.2, 3.3.3.3",
+					"X-Forwarded-Proto": "http",
+					"X-Real-Ip":         "10.10.10.10",
+				}),
+			}
 
-            rr := httptest.NewRecorder()
-            handler.ServeHTTP(rr, req)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-            xff := strings.Join(req.Header.Values("X-Forwarded-For"), ",")
-            require.Equal(t, "2.2.2.2, 3.3.3.3", xff)
+			xff := strings.Join(req.Header.Values("X-Forwarded-For"), ",")
+			require.Equal(t, "2.2.2.2, 3.3.3.3", xff)
 
-            xri := strings.Join(req.Header.Values("X-Real-Ip"), ",")
-            require.Equal(t, "10.10.10.10", xri)
+			xri := strings.Join(req.Header.Values("X-Real-Ip"), ",")
+			require.Equal(t, "10.10.10.10", xri)
 
-            xfp := strings.Join(req.Header.Values("X-Forwarded-Proto"), ",")
-            require.Equal(t, "http", xfp)
+			xfp := strings.Join(req.Header.Values("X-Forwarded-Proto"), ",")
+			require.Equal(t, "http", xfp)
 
-            res := rr.Result()
-            require.Equal(t, http.StatusOK, res.StatusCode)
-        })
+			res := rr.Result()
+			require.Equal(t, http.StatusOK, res.StatusCode)
+		})
 	})
 
 	t.Run("no overwrite allowed header request", func(t *testing.T) {
@@ -552,11 +552,11 @@ func TestCloudflare(t *testing.T) {
 			req := &http.Request{
 				RemoteAddr: "10.10.10.10:42",
 				Header: makeHeaders(map[string]string{
-					"CF-Connecting-IP": "1.2.3.4",
-					"CF-Visitor": "{\"scheme\":\"https\"}",
-					"X-Forwarded-For": "2.2.2.2, 3.3.3.3",
+					"CF-Connecting-IP":  "1.2.3.4",
+					"CF-Visitor":        "{\"scheme\":\"https\"}",
+					"X-Forwarded-For":   "2.2.2.2, 3.3.3.3",
 					"X-Forwarded-Proto": "http",
-					"X-Real-Ip": "10.10.10.10",
+					"X-Real-Ip":         "10.10.10.10",
 				}),
 			}
 
@@ -580,11 +580,11 @@ func TestCloudflare(t *testing.T) {
 			req := &http.Request{
 				RemoteAddr: "10.10.10.10:42",
 				Header: makeHeaders(map[string]string{
-					"CF-Connecting-IP": "1.2.3.4",
-					"CF-Visitor": "{\"scheme\":\"https\"}",
-					"X-Forwarded-For": "3.3.3.3, 4.4.4.4",
+					"CF-Connecting-IP":  "1.2.3.4",
+					"CF-Visitor":        "{\"scheme\":\"https\"}",
+					"X-Forwarded-For":   "3.3.3.3, 4.4.4.4",
 					"X-Forwarded-Proto": "http",
-					"X-Real-Ip": "10.10.10.10",
+					"X-Real-Ip":         "10.10.10.10",
 				}),
 			}
 
