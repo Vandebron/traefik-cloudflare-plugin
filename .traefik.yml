@@ -1,4 +1,4 @@
-displayName: Cloudflare
+displayName: Cloudflare Proxy Handler
 summary: Handle traffic coming from Cloudflare.
 type: middleware
 import: github.com/Vandebron/traefik-cloudflare-plugin

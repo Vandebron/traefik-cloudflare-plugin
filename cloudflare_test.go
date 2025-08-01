@@ -1,4 +1,4 @@
-package traefik_plugin_cloudflare_test
+package traefik_cloudflare_plugin_test
 
 import (
 	"bytes"

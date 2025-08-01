@@ -1,4 +1,4 @@
-package traefik_plugin_cloudflare
+package traefik_cloudflare_plugin
 
 import (
 	"context"
