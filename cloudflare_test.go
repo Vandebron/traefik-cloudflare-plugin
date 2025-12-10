@@ -166,7 +166,7 @@ func TestCloudflare(t *testing.T) {
 			require.Equal(t, http.StatusOK, res.StatusCode)
 		})
 
-		t.Run("expired with empty cidrs", func(t *testing.T) {
+		t.Run("expired with empty cidrs uses fallback", func(t *testing.T) {
 			now = ptime(now.Add(time.Hour))
 
 			http.DefaultClient = &http.Client{
@@ -183,7 +183,7 @@ func TestCloudflare(t *testing.T) {
 			handler.ServeHTTP(rr1, req)
 
 			res1 := rr1.Result()
-			require.Equal(t, http.StatusForbidden, res1.StatusCode)
+			require.Equal(t, http.StatusOK, res1.StatusCode)
 
 			now = ptime(now.Add(time.Hour))
 
@@ -191,7 +191,7 @@ func TestCloudflare(t *testing.T) {
 			handler.ServeHTTP(rr2, req)
 
 			res2 := rr2.Result()
-			require.Equal(t, http.StatusForbidden, res2.StatusCode)
+			require.Equal(t, http.StatusOK, res2.StatusCode)
 		})
 
 		t.Run("expired", func(t *testing.T) {
