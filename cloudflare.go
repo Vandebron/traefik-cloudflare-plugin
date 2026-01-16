@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -44,7 +44,6 @@ type Cloudflare struct {
 	allowedChecker         ipChecker
 	overwriteRequestHeader bool
 	appendXForwardedFor    bool
-	debug                  bool
 }
 
 // CFVisitorHeader definition for the header value.
@@ -52,6 +51,10 @@ type CFVisitorHeader struct {
 	Scheme string `json:"scheme"`
 }
 
+// New creates a new instance of the Cloudflare plugin which is required by
+// traefik
+// TODO: refactor this function, it's too long and complex and we should avoid
+// having to much logic in here
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 	if config == nil {
 		return nil, errors.New("invalid config")
@@ -62,7 +65,6 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		name:                   name,
 		overwriteRequestHeader: config.OverwriteRequestHeader,
 		appendXForwardedFor:    config.AppendXForwardedFor,
-		debug:                  config.Debug,
 	}
 
 	if len(config.TrustedCIDRs) > 0 {
@@ -93,13 +95,18 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 			ri = minRefresh
 		}
 
-		checker := &cloudflareIPChecker{
-			RefreshInterval: ri,
-		}
+		checker := NewCloudflareIPChecker(
+			withRefreshInterval(ri),
+		)
 
 		err = checker.Refresh(ctx)
+		if checker.cidrs == nil {
+			return nil, fmt.Errorf("failed to get Cloudflare IPs: %w", err)
+		}
+
+		// Log a warning if the initial refresh failed
 		if err != nil {
-			return nil, fmt.Errorf("failed to refresh Cloudflare IPs: %w", err)
+			slog.Error(fmt.Sprintf("error: failed to refresh Cloudflare IPs: %v, continue with current cidrs", err))
 		}
 
 		c.trustedChecker = checker
@@ -123,8 +130,9 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	return c, nil
 }
 
+// ServeHTTP implementation for Traefik plugin
+// TODO: this function is ridiculously long and complex, needs refactoring
 func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	ipList := XForwardedIpValues(r)
 
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -146,9 +154,7 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(ipList); i++ {
 		sip := net.ParseIP(ipList[i])
 		if sip == nil {
-			if c.debug {
-				log.Println(fmt.Sprintf("debug: bad ip %s", ipList[i]))
-			}
+			slog.Debug(fmt.Sprintf("debug: bad ip %s", ipList[i]))
 			code := http.StatusBadRequest
 			http.Error(w, fmt.Sprintf("cf:bad ip %s", ipList[i]), code)
 			return
@@ -156,9 +162,7 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		trustIp, err := c.trustedChecker.CheckIP(r.Context(), sip)
 		if err != nil {
-			if c.debug {
-				log.Println(fmt.Errorf("debug: %w", err))
-			}
+			slog.Debug(fmt.Sprintf("debug: %v", err))
 			code := http.StatusInternalServerError
 			http.Error(w, fmt.Sprintf("cf:%s", http.StatusText(code)), code)
 			return
@@ -171,8 +175,8 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		allowIp, err := c.allowedChecker.CheckIP(r.Context(), sip)
-		if err != nil && c.debug {
-			log.Println(fmt.Errorf("debug: %w", err))
+		if err != nil {
+			slog.Debug(fmt.Sprintf("debug: %s", err))
 		}
 
 		if allowIp {
@@ -182,9 +186,7 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !allowed {
-		if c.debug {
-			log.Println(fmt.Sprintf("debug: deny request from: %s", strings.Join(ipList, ",")))
-		}
+		slog.Debug(fmt.Sprintf("debug: deny request from: %s", strings.Join(ipList, ",")))
 		code := http.StatusForbidden
 		http.Error(w, fmt.Sprintf("cf:%s", http.StatusText(code)), code)
 		return
@@ -193,9 +195,7 @@ func (c *Cloudflare) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if c.overwriteRequestHeader && trusted {
 		err = overwriteRequestHeader(r, c.appendXForwardedFor)
 		if err != nil {
-			if c.debug {
-				log.Println(fmt.Errorf("debug: %w", err))
-			}
+			slog.Debug(fmt.Sprintf("debug: %s", err))
 			code := http.StatusBadRequest
 			http.Error(w, fmt.Sprintf("cf:%s", http.StatusText(code)), code)
 			return
